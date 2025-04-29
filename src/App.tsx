@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import WorkoutsPage from "./pages/WorkoutsPage";
 import WorkoutDetailPage from "./pages/WorkoutDetailPage";
+import CustomWorkoutPage from "./pages/CustomWorkoutPage";
 import NutritionPage from "./pages/NutritionPage";
 import FoodDetailPage from "./pages/FoodDetailPage";
 import MealHistoryPage from "./pages/MealHistoryPage";
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/workouts" element={<WorkoutsPage />} />
             <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
+            <Route path="/custom-workout" element={<CustomWorkoutPage />} />
             <Route path="/nutrition" element={<NutritionPage />} />
             <Route path="/nutrition/:foodId" element={<FoodDetailPage />} />
             <Route path="/meals" element={<MealHistoryPage />} />
