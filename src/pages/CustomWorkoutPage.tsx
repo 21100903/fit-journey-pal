@@ -1,12 +1,13 @@
 
 import React from 'react';
 import CustomWorkout from '@/components/Workouts/CustomWorkout';
+import MobileLayout from '@/components/Layout/MobileLayout';
 
 const CustomWorkoutPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white max-w-md mx-auto">
+    <MobileLayout>
       <CustomWorkout />
-    </div>
+    </MobileLayout>
   );
 };
 

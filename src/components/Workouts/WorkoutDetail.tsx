@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -9,11 +9,15 @@ import {
   ListChecks, 
   CheckCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Play,
+  Stop
 } from 'lucide-react';
 import { getWorkouts, addWorkoutEntry } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 const WorkoutDetail: React.FC = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
@@ -25,12 +29,74 @@ const WorkoutDetail: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isLogging, setIsLogging] = useState(false);
   
+  // Timer functionality
+  const [isActive, setIsActive] = useState(false);
+  const [time, setTime] = useState(0);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [exerciseStatus, setExerciseStatus] = useState<{[key: string]: boolean}>({});
+  
   const { data: workouts = [], isLoading } = useQuery({
     queryKey: ['workouts'],
     queryFn: getWorkouts
   });
   
   const workout = workouts.find(w => w.id === workoutId);
+
+  // Initialize exercise status when workout data is loaded
+  useEffect(() => {
+    if (workout && workout.instructions) {
+      const initialStatus = workout.instructions.reduce((acc: {[key: string]: boolean}, _, index) => {
+        acc[index.toString()] = false;
+        return acc;
+      }, {});
+      setExerciseStatus(initialStatus);
+    }
+  }, [workout]);
+  
+  // Timer effect
+  useEffect(() => {
+    let interval: number | null = null;
+    
+    if (isActive) {
+      interval = window.setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    } else if (interval) {
+      window.clearInterval(interval);
+    }
+    
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [isActive]);
+  
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  const toggleExercise = (index: number) => {
+    setExerciseStatus(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+  
+  const handleStart = () => {
+    setIsActive(true);
+    setStartTime(new Date());
+    toast.success("Workout started!");
+  };
+  
+  const handleStop = () => {
+    setIsActive(false);
+    if (startTime) {
+      const elapsedMinutes = Math.round((new Date().getTime() - startTime.getTime()) / 60000);
+      setDuration(elapsedMinutes);
+      toast.info(`Workout completed in ${elapsedMinutes} minutes`);
+    }
+  };
 
   const handleLogWorkout = async () => {
     if (!user) {
@@ -98,6 +164,8 @@ const WorkoutDetail: React.FC = () => {
     intermediate: 'bg-yellow-100 text-yellow-800',
     advanced: 'bg-red-100 text-red-800'
   }[workout.difficulty];
+  
+  const allExercisesCompleted = Object.values(exerciseStatus).every(status => status);
 
   return (
     <div className="pb-24">
@@ -128,11 +196,39 @@ const WorkoutDetail: React.FC = () => {
           </span>
         </div>
         
+        {/* Timer display */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="text-center mb-3">
+            <span className="text-2xl font-mono font-bold">{formatTime(time)}</span>
+          </div>
+          
+          <div className="flex justify-between gap-2">
+            <Button 
+              onClick={handleStart}
+              disabled={isActive}
+              className="w-full bg-fitness-success text-white"
+              size="lg"
+            >
+              <Play size={18} className="mr-1" />
+              Start
+            </Button>
+            <Button
+              onClick={handleStop}
+              disabled={!isActive}
+              className="w-full bg-red-500 text-white hover:bg-red-600"
+              size="lg"
+            >
+              <Stop size={18} className="mr-1" />
+              Stop
+            </Button>
+          </div>
+        </div>
+        
         <p className="text-gray-600 mb-6">{workout.description}</p>
         
         <div className="mb-6">
           <div 
-            className="flex justify-between items-center cursor-pointer" 
+            className="flex justify-between items-center cursor-pointer mb-3" 
             onClick={() => setExpanded(!expanded)}
           >
             <div className="flex items-center">
@@ -145,12 +241,25 @@ const WorkoutDetail: React.FC = () => {
           {expanded && (
             <ul className="mt-3 space-y-2">
               {workout.instructions.map((instruction, index) => (
-                <li key={index} className="flex">
-                  <CheckCircle size={18} className="mr-2 text-fitness-success shrink-0 mt-0.5" />
-                  <p className="text-sm">{instruction}</p>
+                <li key={index} className="flex items-center p-2 border-b last:border-0">
+                  <button 
+                    onClick={() => toggleExercise(index)}
+                    className={`mr-2 p-1 rounded-full ${exerciseStatus[index] ? 'bg-fitness-success text-white' : 'bg-gray-200'}`}
+                  >
+                    <CheckCircle size={18} />
+                  </button>
+                  <p className={`text-sm ${exerciseStatus[index] ? 'line-through text-gray-500' : ''}`}>{instruction}</p>
                 </li>
               ))}
             </ul>
+          )}
+          
+          {allExercisesCompleted && isActive && (
+            <div className="mt-3 text-center">
+              <Button onClick={handleStop} variant="destructive">
+                Finish Workout
+              </Button>
+            </div>
           )}
         </div>
         
@@ -198,11 +307,11 @@ const WorkoutDetail: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Notes (optional)
               </label>
-              <textarea
+              <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="fitness-input"
                 placeholder="How did it go? Any achievements?"
+                className="fitness-input"
                 rows={3}
               />
             </div>
