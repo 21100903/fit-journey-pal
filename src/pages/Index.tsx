@@ -13,7 +13,7 @@ const Index = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-fitness-light to-white p-6">
-        <h1 className="text-3xl font-bold text-fitness-dark mb-2 text-center">FitJourneyPal</h1>
+        <h1 className="text-3xl font-bold text-fitness-dark mb-2 text-center">ProFit</h1>
         <p className="text-gray-600 mb-8 text-center">Track your fitness and nutrition journey</p>
         
         <div className="space-y-4 w-full max-w-sm">

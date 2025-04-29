@@ -31,7 +31,7 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="px-6 py-8">
-      <h1 className="text-2xl font-bold text-center mb-6">Login to FitJourneyPal</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">Login to ProFit</h1>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
