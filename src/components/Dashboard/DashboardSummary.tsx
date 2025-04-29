@@ -91,7 +91,10 @@ const DashboardSummary: React.FC = () => {
         </div>
       </div>
       
-      <div className="fitness-card mb-6">
+      <div 
+        className="fitness-card mb-6 cursor-pointer"
+        onClick={() => navigate('/meals')}
+      >
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-medium">Net Calories</h3>
           <TrendingUp size={18} className={netCalories < 2000 ? "text-fitness-success" : "text-fitness-error"} />

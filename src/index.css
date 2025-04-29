@@ -75,6 +75,17 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    
+    /* Hide scrollbars for a more mobile app-like experience */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  /* Hide scrollbars for Chrome, Safari and Opera */
+  body::-webkit-scrollbar,
+  div::-webkit-scrollbar,
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

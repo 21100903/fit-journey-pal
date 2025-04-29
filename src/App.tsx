@@ -14,6 +14,7 @@ import WorkoutsPage from "./pages/WorkoutsPage";
 import WorkoutDetailPage from "./pages/WorkoutDetailPage";
 import NutritionPage from "./pages/NutritionPage";
 import FoodDetailPage from "./pages/FoodDetailPage";
+import MealHistoryPage from "./pages/MealHistoryPage";
 import AddEntryPage from "./pages/AddEntryPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/workouts/:workoutId" element={<WorkoutDetailPage />} />
             <Route path="/nutrition" element={<NutritionPage />} />
             <Route path="/nutrition/:foodId" element={<FoodDetailPage />} />
+            <Route path="/meals" element={<MealHistoryPage />} />
             <Route path="/add" element={<AddEntryPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
