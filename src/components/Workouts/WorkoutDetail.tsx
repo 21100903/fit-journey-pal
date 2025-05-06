@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const WorkoutDetail: React.FC = () => {
   const { workoutId } = useParams<{ workoutId: string }>();
@@ -25,15 +26,16 @@ const WorkoutDetail: React.FC = () => {
   const { user } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const [intensity, setIntensity] = useState<'low' | 'medium' | 'high'>('medium');
-  const [duration, setDuration] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
   const [isLogging, setIsLogging] = useState(false);
   
-  // Timer functionality
+  // Workout session state
   const [isActive, setIsActive] = useState(false);
   const [time, setTime] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [exerciseStatus, setExerciseStatus] = useState<{[key: string]: boolean}>({});
+  const [workoutCompleted, setWorkoutCompleted] = useState(false);
   
   const { data: workouts = [], isLoading } = useQuery({
     queryKey: ['workouts'],
@@ -44,8 +46,8 @@ const WorkoutDetail: React.FC = () => {
 
   // Initialize exercise status when workout data is loaded
   useEffect(() => {
-    if (workout && workout.instructions) {
-      const initialStatus = workout.instructions.reduce((acc: {[key: string]: boolean}, _, index) => {
+    if (workout && workout.exercises) {
+      const initialStatus = workout.exercises.reduce((acc: {[key: string]: boolean}, _, index) => {
         acc[index.toString()] = false;
         return acc;
       }, {});
@@ -70,17 +72,21 @@ const WorkoutDetail: React.FC = () => {
     };
   }, [isActive]);
   
+  // Check if all exercises are completed
+  useEffect(() => {
+    if (workout && workout.exercises && isActive) {
+      const allCompleted = workout.exercises.every((_, index) => exerciseStatus[index.toString()]);
+      if (allCompleted) {
+        setWorkoutCompleted(true);
+        handleStop();
+      }
+    }
+  }, [exerciseStatus, workout, isActive]);
+  
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-  
-  const toggleExercise = (index: number) => {
-    setExerciseStatus(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
   };
   
   const handleStart = () => {
@@ -93,8 +99,23 @@ const WorkoutDetail: React.FC = () => {
     setIsActive(false);
     if (startTime) {
       const elapsedMinutes = Math.round((new Date().getTime() - startTime.getTime()) / 60000);
-      setDuration(elapsedMinutes);
       toast.info(`Workout completed in ${elapsedMinutes} minutes`);
+    }
+  };
+
+  const completeExercise = (index: number) => {
+    setExerciseStatus(prev => ({
+      ...prev,
+      [index]: true
+    }));
+    
+    // If there's a next exercise, set it as current
+    if (workout && workout.exercises && index < workout.exercises.length - 1) {
+      setCurrentExerciseIndex(index + 1);
+    } else {
+      // All exercises completed
+      setWorkoutCompleted(true);
+      handleStop();
     }
   };
 
@@ -105,19 +126,18 @@ const WorkoutDetail: React.FC = () => {
       return;
     }
     
-    if (!duration) {
-      toast.error('Please enter workout duration');
-      return;
-    }
-    
     try {
       setIsLogging(true);
+      
+      const duration = startTime 
+        ? Math.round((new Date().getTime() - startTime.getTime()) / 60000)
+        : workout?.duration || 0;
       
       await addWorkoutEntry({
         userId: user.id,
         workoutId: workout!.id,
         date: new Date().toISOString().split('T')[0],
-        duration: Number(duration),
+        duration: duration,
         intensity,
         notes: notes || undefined
       });
@@ -164,8 +184,6 @@ const WorkoutDetail: React.FC = () => {
     intermediate: 'bg-yellow-100 text-yellow-800',
     advanced: 'bg-red-100 text-red-800'
   }[workout.difficulty];
-  
-  const allExercisesCompleted = Object.values(exerciseStatus).every(status => status);
 
   return (
     <div className="pb-24">
@@ -202,30 +220,30 @@ const WorkoutDetail: React.FC = () => {
             <span className="text-2xl font-mono font-bold">{formatTime(time)}</span>
           </div>
           
-          <div className="flex justify-between gap-2">
+          {!isActive && !workoutCompleted ? (
             <Button 
               onClick={handleStart}
-              disabled={isActive}
               className="w-full bg-fitness-success text-white"
               size="lg"
             >
               <Play size={18} className="mr-1" />
-              Start
+              Start Workout
             </Button>
+          ) : isActive ? (
             <Button
               onClick={handleStop}
-              disabled={!isActive}
               className="w-full bg-red-500 text-white hover:bg-red-600"
               size="lg"
             >
               <StopCircle size={18} className="mr-1" />
-              Stop
+              Stop Workout
             </Button>
-          </div>
+          ) : null}
         </div>
         
         <p className="text-gray-600 mb-6">{workout.description}</p>
         
+        {/* Exercise List */}
         <div className="mb-6">
           <div 
             className="flex justify-between items-center cursor-pointer mb-3" 
@@ -233,101 +251,153 @@ const WorkoutDetail: React.FC = () => {
           >
             <div className="flex items-center">
               <ListChecks size={18} className="mr-2 text-fitness-primary" />
-              <h3 className="font-bold">Instructions</h3>
+              <h3 className="font-bold">Exercises</h3>
             </div>
             {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
           
           {expanded && (
-            <ul className="mt-3 space-y-2">
-              {workout.instructions.map((instruction, index) => (
-                <li key={index} className="flex items-center p-2 border-b last:border-0">
-                  <button 
-                    onClick={() => toggleExercise(index)}
-                    className={`mr-2 p-1 rounded-full ${exerciseStatus[index] ? 'bg-fitness-success text-white' : 'bg-gray-200'}`}
-                  >
-                    <CheckCircle size={18} />
-                  </button>
-                  <p className={`text-sm ${exerciseStatus[index] ? 'line-through text-gray-500' : ''}`}>{instruction}</p>
+            <ul className="mt-3 space-y-3">
+              {workout.exercises.map((exercise, index) => (
+                <li 
+                  key={exercise.id} 
+                  className={`p-3 border rounded-lg ${
+                    isActive && currentExerciseIndex === index 
+                      ? 'border-fitness-primary bg-fitness-primary bg-opacity-5' 
+                      : 'border-gray-200'
+                  } ${exerciseStatus[index] ? 'opacity-60' : ''}`}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className={`font-medium ${exerciseStatus[index] ? 'line-through text-gray-500' : ''}`}>
+                      {exercise.name}
+                    </h4>
+                    <Checkbox 
+                      checked={exerciseStatus[index]} 
+                      onCheckedChange={() => {
+                        if (isActive && currentExerciseIndex === index) {
+                          completeExercise(index);
+                        }
+                      }}
+                      disabled={!isActive || currentExerciseIndex !== index || exerciseStatus[index]}
+                      className="h-5 w-5"
+                    />
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-2">{exercise.description}</p>
+                  
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {exercise.sets && (
+                      <span className="bg-gray-100 px-2 py-1 rounded">
+                        {exercise.sets} sets
+                      </span>
+                    )}
+                    {exercise.reps && (
+                      <span className="bg-gray-100 px-2 py-1 rounded">
+                        {exercise.reps} reps
+                      </span>
+                    )}
+                    {exercise.duration && (
+                      <span className="bg-gray-100 px-2 py-1 rounded">
+                        {Math.floor(exercise.duration / 60) > 0 ? `${Math.floor(exercise.duration / 60)}m ` : ''}
+                        {exercise.duration % 60 > 0 ? `${exercise.duration % 60}s` : ''}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {isActive && currentExerciseIndex === index && !exerciseStatus[index] && (
+                    <Button 
+                      onClick={() => completeExercise(index)}
+                      className="w-full mt-3 bg-fitness-success"
+                      size="sm"
+                    >
+                      <CheckCircle size={16} className="mr-1" />
+                      Complete Exercise
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
           )}
-          
-          {allExercisesCompleted && isActive && (
-            <div className="mt-3 text-center">
-              <Button onClick={handleStop} variant="destructive">
-                Finish Workout
-              </Button>
-            </div>
-          )}
         </div>
         
-        <div className="border-t pt-4 mt-4">
-          <h3 className="font-bold mb-4">Log This Workout</h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Duration (minutes)
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={duration}
-                onChange={(e) => setDuration(e.target.value ? Number(e.target.value) : '')}
-                className="fitness-input"
-                placeholder={workout.duration.toString()}
-              />
-            </div>
+        {/* Log Section - Only show after workout completion */}
+        {workoutCompleted && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-bold mb-4">Log Completed Workout</h3>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Intensity
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['low', 'medium', 'high'] as const).map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => setIntensity(level)}
-                    className={`py-2 px-4 rounded-lg border text-center capitalize ${
-                      intensity === level
-                        ? 'bg-fitness-primary text-white border-fitness-primary'
-                        : 'bg-white text-gray-700 border-gray-300'
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Intensity
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['low', 'medium', 'high'] as const).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setIntensity(level)}
+                      className={`py-2 px-4 rounded-lg border text-center capitalize ${
+                        intensity === level
+                          ? 'bg-fitness-primary text-white border-fitness-primary'
+                          : 'bg-white text-gray-700 border-gray-300'
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes (optional)
-              </label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="How did it go? Any achievements?"
-                className="fitness-input"
-                rows={3}
-              />
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes (optional)
+                </label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="How did it go? Any achievements?"
+                  className="fitness-input"
+                  rows={3}
+                />
+              </div>
+              
+              <Button
+                onClick={handleLogWorkout}
+                disabled={isLogging}
+                className="w-full bg-fitness-primary text-white"
+                size="lg"
+              >
+                {isLogging ? 'Logging...' : 'Log Workout'}
+              </Button>
             </div>
           </div>
-        </div>
+        )}
       </div>
       
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t max-w-md mx-auto">
-        <button
-          onClick={handleLogWorkout}
-          disabled={isLogging || !duration}
-          className="fitness-btn-primary w-full"
-        >
-          {isLogging ? 'Logging...' : 'Log Workout'}
-        </button>
-      </div>
+      {/* Fixed bottom button - Only show during active workout or before starting */}
+      {!workoutCompleted && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t max-w-md mx-auto">
+          {!isActive ? (
+            <Button
+              onClick={handleStart}
+              className="w-full bg-fitness-success text-white"
+              size="lg"
+            >
+              <Play size={18} className="mr-1" />
+              Start Workout
+            </Button>
+          ) : (
+            <Button
+              onClick={handleStop}
+              className="w-full bg-red-500 text-white hover:bg-red-600"
+              size="lg"
+            >
+              <StopCircle size={18} className="mr-1" />
+              Stop Workout
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

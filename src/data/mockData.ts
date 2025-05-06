@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -8,7 +7,17 @@ export interface Workout {
   duration: number; // in minutes
   caloriesBurn: number; // estimated calories
   instructions: string[];
+  exercises: Exercise[]; // Added exercises array
   imageUrl?: string;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  sets?: number;
+  reps?: number;
+  duration?: number; // in seconds
+  description: string;
 }
 
 export interface Food {
@@ -58,6 +67,41 @@ export const workouts: Workout[] = [
       'Perform each exercise for 45 seconds with 15 seconds rest',
       'Complete 3 rounds of the circuit',
       'Rest 1 minute between rounds'
+    ],
+    exercises: [
+      {
+        id: '1-1',
+        name: 'Push-ups',
+        sets: 3,
+        reps: 15,
+        description: 'Keep your body straight and lower yourself until your chest nearly touches the ground'
+      },
+      {
+        id: '1-2',
+        name: 'Squats',
+        sets: 3,
+        reps: 20,
+        description: 'Stand with feet shoulder-width apart and lower your hips until your thighs are parallel to the floor'
+      },
+      {
+        id: '1-3',
+        name: 'Plank',
+        duration: 60,
+        description: 'Hold a push-up position with your weight on your forearms for the specified time'
+      },
+      {
+        id: '1-4',
+        name: 'Lunges',
+        sets: 3,
+        reps: 12,
+        description: 'Step forward with one leg and lower your hips until both knees are bent at 90 degrees'
+      },
+      {
+        id: '1-5',
+        name: 'Mountain Climbers',
+        duration: 45,
+        description: 'Alternate bringing your knees toward your chest in a push-up position'
+      }
     ]
   },
   {
@@ -73,6 +117,38 @@ export const workouts: Workout[] = [
       'Move through sun salutations',
       'Hold each pose for 5 breaths',
       'End with 5 minutes of meditation'
+    ],
+    exercises: [
+      {
+        id: '2-1',
+        name: 'Deep Breathing',
+        duration: 300,
+        description: 'Sit comfortably and focus on deep, slow breaths'
+      },
+      {
+        id: '2-2',
+        name: 'Sun Salutation A',
+        sets: 5,
+        description: 'Flow through the sequence of poses, synchronizing movement with breath'
+      },
+      {
+        id: '2-3',
+        name: 'Warrior Poses',
+        sets: 3,
+        description: 'Hold each warrior pose (I, II, and III) for 30 seconds on each side'
+      },
+      {
+        id: '2-4',
+        name: 'Seated Forward Fold',
+        duration: 120,
+        description: 'Sit with legs extended and fold forward from the hips'
+      },
+      {
+        id: '2-5',
+        name: 'Savasana',
+        duration: 300,
+        description: 'Lie flat on your back in corpse pose for final relaxation'
+      }
     ]
   },
   {
@@ -87,6 +163,40 @@ export const workouts: Workout[] = [
       '30 seconds maximum effort, 30 seconds rest',
       'Complete 10 rounds',
       'Focus on proper form over speed'
+    ],
+    exercises: [
+      {
+        id: '3-1',
+        name: 'Burpees',
+        sets: 5,
+        reps: 10,
+        description: 'From standing, drop to a squat position, kick feet back, do a push-up, return to squat, and jump up'
+      },
+      {
+        id: '3-2',
+        name: 'Jumping Jacks',
+        duration: 60,
+        description: 'Jump with legs spread wide and arms overhead, then return to standing with arms at sides'
+      },
+      {
+        id: '3-3',
+        name: 'High Knees',
+        duration: 45,
+        description: 'Run in place, lifting knees as high as possible'
+      },
+      {
+        id: '3-4',
+        name: 'Squat Jumps',
+        sets: 4,
+        reps: 15,
+        description: 'Drop into a squat, then explode upward into a jump, landing softly back in squat position'
+      },
+      {
+        id: '3-5',
+        name: 'Sprint in Place',
+        duration: 30,
+        description: 'Run in place as fast as possible, focusing on speed and intensity'
+      }
     ]
   },
   {
@@ -101,6 +211,42 @@ export const workouts: Workout[] = [
       'Perform each exercise for 45 seconds',
       'Rest 15 seconds between exercises',
       'Complete 3 rounds'
+    ],
+    exercises: [
+      {
+        id: '4-1',
+        name: 'Crunches',
+        sets: 3,
+        reps: 20,
+        description: 'Lie on your back with knees bent, place hands behind head, and lift shoulders toward knees'
+      },
+      {
+        id: '4-2',
+        name: 'Plank',
+        duration: 60,
+        description: 'Hold a push-up position with weight on forearms, keeping body in a straight line'
+      },
+      {
+        id: '4-3',
+        name: 'Russian Twists',
+        sets: 3,
+        reps: 30,
+        description: 'Sit with knees bent, lean back slightly, rotate torso from side to side'
+      },
+      {
+        id: '4-4',
+        name: 'Leg Raises',
+        sets: 3,
+        reps: 15,
+        description: 'Lie on back, hands at sides, lift legs straight up and slowly lower them without touching the floor'
+      },
+      {
+        id: '4-5',
+        name: 'Bicycle Crunches',
+        sets: 3,
+        reps: 30,
+        description: 'Lie on back, alternate bringing elbow to opposite knee in a pedaling motion'
+      }
     ]
   },
   {
@@ -116,6 +262,42 @@ export const workouts: Workout[] = [
       'Perform 3-4 sets of each exercise',
       'Rest 60-90 seconds between sets',
       'Stretch thoroughly after workout'
+    ],
+    exercises: [
+      {
+        id: '5-1',
+        name: 'Squats',
+        sets: 4,
+        reps: 15,
+        description: 'Stand with feet shoulder-width apart and lower your hips until thighs are parallel to the floor'
+      },
+      {
+        id: '5-2',
+        name: 'Lunges',
+        sets: 3,
+        reps: 12,
+        description: 'Step forward with one leg and lower hips until both knees are bent at 90 degrees, alternate legs'
+      },
+      {
+        id: '5-3',
+        name: 'Glute Bridges',
+        sets: 3,
+        reps: 20,
+        description: 'Lie on back, feet flat on floor, lift hips toward ceiling, squeezing glutes at the top'
+      },
+      {
+        id: '5-4',
+        name: 'Calf Raises',
+        sets: 3,
+        reps: 30,
+        description: 'Stand with feet hip-width apart, raise heels off the ground, then lower back down'
+      },
+      {
+        id: '5-5',
+        name: 'Wall Sit',
+        duration: 60,
+        description: 'Lean against wall with knees bent at 90 degrees, hold position for the specified time'
+      }
     ]
   }
 ];
