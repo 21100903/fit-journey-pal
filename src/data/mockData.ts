@@ -488,6 +488,18 @@ export const getUserMealEntries = (userId: string, date?: string) => {
   });
 };
 
+export const deleteMealEntry = (mealId: string) => {
+  const index = mealEntries.findIndex(entry => entry.id === mealId);
+  
+  if (index !== -1) {
+    mealEntries.splice(index, 1);
+  }
+  
+  return new Promise<void>((resolve) => {
+    setTimeout(() => resolve(), 500);
+  });
+};
+
 export const getUserWorkoutEntries = (userId: string, date?: string) => {
   const dateToFilter = date || new Date().toISOString().split('T')[0];
   
