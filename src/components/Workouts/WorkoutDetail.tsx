@@ -11,7 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Play,
-  Stop
+  StopCircle
 } from 'lucide-react';
 import { getWorkouts, addWorkoutEntry } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,7 +218,7 @@ const WorkoutDetail: React.FC = () => {
               className="w-full bg-red-500 text-white hover:bg-red-600"
               size="lg"
             >
-              <Stop size={18} className="mr-1" />
+              <StopCircle size={18} className="mr-1" />
               Stop
             </Button>
           </div>
