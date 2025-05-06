@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Utensils, TrendingUp, Dumbbell, Trash2 } from 'lucide-react';
@@ -60,6 +61,18 @@ const DashboardSummary: React.FC = () => {
       });
     }
   });
+
+  // Function to handle delete workout click
+  const handleDeleteWorkout = (entry: WorkoutEntry) => {
+    setWorkoutToDelete(entry);
+  };
+
+  // Function to confirm workout deletion
+  const confirmDeleteWorkout = () => {
+    if (workoutToDelete) {
+      deleteWorkoutMutation.mutate(workoutToDelete.id);
+    }
+  };
 
   // Calculate nutrition totals for today
   const calculateNutritionTotals = (entries: MealEntry[]) => {
