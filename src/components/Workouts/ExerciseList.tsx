@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Plus, Check, Trash2, PlayCircle, StopCircle } from 'lucide-react';
+import { Plus, Check, Trash2, PlayCircle, StopCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

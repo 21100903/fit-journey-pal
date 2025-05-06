@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { addWorkoutEntry } from '@/data/mockData';
 import { useQueryClient } from '@tanstack/react-query';
@@ -42,10 +40,10 @@ const CustomWorkout: React.FC = () => {
 
   const {
     workoutActive,
-    workoutStartTime,
     workoutTimeSpent,
     elapsedTime,
     exerciseStartTime,
+    setExerciseStartTime,
     startWorkout,
     stopWorkout,
     formatTime
