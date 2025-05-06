@@ -195,7 +195,7 @@ const CustomWorkout: React.FC = () => {
     }
 
     try {
-      // Create a custom workout entry
+      // Create a custom workout entry with all required Workout properties
       const workoutData = {
         userId: user.id,
         workoutId: 'custom-' + Date.now(),
@@ -210,7 +210,11 @@ const CustomWorkout: React.FC = () => {
           description: form.getValues('description') || 'Custom workout',
           exercises: exercises,
           duration: workoutTimeSpent || 0,
-          caloriesBurn: (workoutTimeSpent || 0) * 5 // Rough estimate: 5 calories per minute
+          caloriesBurn: (workoutTimeSpent || 0) * 5, // Rough estimate: 5 calories per minute
+          // Add the missing required Workout properties
+          category: 'custom',
+          difficulty: 'intermediate',
+          instructions: ['Custom workout created by user']
         }
       };
       
