@@ -211,9 +211,9 @@ const CustomWorkout: React.FC = () => {
           exercises: exercises,
           duration: workoutTimeSpent || 0,
           caloriesBurn: (workoutTimeSpent || 0) * 5, // Rough estimate: 5 calories per minute
-          // Add the missing required Workout properties
+          // Add the missing required Workout properties with correct types
           category: 'custom',
-          difficulty: 'intermediate',
+          difficulty: 'intermediate' as 'beginner' | 'intermediate' | 'advanced',
           instructions: ['Custom workout created by user']
         }
       };
