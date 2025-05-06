@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -8,7 +8,8 @@ import {
   Trash2, 
   PlayCircle,
   StopCircle,
-  Edit
+  Edit,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { addWorkoutEntry } from '@/data/mockData';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Exercise {
   id: string;
@@ -39,12 +42,15 @@ interface CustomWorkoutForm {
 const CustomWorkout: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
   const [exerciseStartTime, setExerciseStartTime] = useState<number | null>(null);
   const [workoutActive, setWorkoutActive] = useState(false);
   const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
   const [workoutTimeSpent, setWorkoutTimeSpent] = useState<number | null>(null);
   const [workoutCompleted, setWorkoutCompleted] = useState(false);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number>(0);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const form = useForm<CustomWorkoutForm>({
     defaultValues: {
@@ -55,6 +61,30 @@ const CustomWorkout: React.FC = () => {
   });
 
   const exercises = form.watch('exercises') || [];
+
+  // Timer effect for workout
+  useEffect(() => {
+    let timer: number | undefined;
+    
+    if (workoutActive && workoutStartTime) {
+      timer = window.setInterval(() => {
+        const elapsed = Math.floor((Date.now() - workoutStartTime) / 1000);
+        setElapsedTime(elapsed);
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [workoutActive, workoutStartTime]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const addExercise = () => {
     const currentExercises = form.getValues('exercises') || [];
@@ -99,6 +129,7 @@ const CustomWorkout: React.FC = () => {
     
     setWorkoutActive(true);
     setWorkoutStartTime(Date.now());
+    setCurrentExerciseIndex(0);
     toast.success("Workout started!");
   };
 
@@ -138,9 +169,15 @@ const CustomWorkout: React.FC = () => {
     setExerciseStartTime(null);
     
     toast.success(`Exercise completed in ${timeSpent} seconds!`);
+    
+    // Move to next exercise if available
+    const currentIndex = exercises.findIndex(ex => ex.id === id);
+    if (currentIndex < exercises.length - 1) {
+      setCurrentExerciseIndex(currentIndex + 1);
+    }
   };
 
-  const saveWorkout = () => {
+  const saveWorkout = async () => {
     if (!user) {
       toast.error("Please log in to save workouts");
       navigate('/login');
@@ -157,16 +194,49 @@ const CustomWorkout: React.FC = () => {
       return;
     }
 
-    // In a real app, this would save to a database
-    // For now we'll just show a success message
-    toast.success("Workout saved successfully!");
-    navigate('/workouts');
+    try {
+      // Create a custom workout entry
+      const workoutData = {
+        userId: user.id,
+        workoutId: 'custom-' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        duration: workoutTimeSpent || 0,
+        intensity: 'medium' as const,
+        notes: form.getValues('description'),
+        // Create the workout object that's part of WorkoutEntry
+        customWorkout: {
+          id: 'custom-' + Date.now(),
+          name: form.getValues('name'),
+          description: form.getValues('description') || 'Custom workout',
+          exercises: exercises,
+          duration: workoutTimeSpent || 0,
+          caloriesBurn: (workoutTimeSpent || 0) * 5 // Rough estimate: 5 calories per minute
+        }
+      };
+      
+      await addWorkoutEntry(workoutData);
+      
+      // Invalidate the queries to refresh workout list
+      queryClient.invalidateQueries({ queryKey: ['workoutEntries'] });
+      
+      toast.success("Workout saved successfully!");
+      navigate('/workouts');
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      toast.error("Failed to save workout. Please try again.");
+    }
   };
 
   return (
     <div className="pb-24">
       <div className="relative">
-        <div className="h-40 bg-gradient-to-r from-fitness-primary to-fitness-accent"></div>
+        <div className="h-40 bg-gradient-to-r from-fitness-primary to-fitness-accent">
+          {workoutActive && (
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 text-white font-bold text-xl">
+              {formatTime(elapsedTime)}
+            </div>
+          )}
+        </div>
         <button 
           onClick={() => navigate('/workouts')}
           className="absolute top-4 left-4 bg-white p-2 rounded-full shadow-md"
@@ -251,12 +321,16 @@ const CustomWorkout: React.FC = () => {
                       key={exercise.id}
                       className={`border rounded-lg p-3 ${
                         exercise.completed ? "bg-gray-50" : ""
-                      } ${activeExerciseId === exercise.id ? "border-green-500" : ""}`}
+                      } ${activeExerciseId === exercise.id ? "border-green-500" : ""} ${
+                        workoutActive && currentExerciseIndex === index && !exercise.completed ? "border-blue-500 border-2" : ""
+                      }`}
                     >
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center">
-                          <span className="bg-fitness-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">
-                            {index + 1}
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 ${
+                            exercise.completed ? "bg-green-500 text-white" : "bg-fitness-primary text-white"
+                          }`}>
+                            {exercise.completed ? <Check size={12} /> : index + 1}
                           </span>
                           {!workoutActive && !workoutCompleted ? (
                             <Input
@@ -280,29 +354,31 @@ const CustomWorkout: React.FC = () => {
                             <Trash2 size={16} />
                           </Button>
                         ) : workoutActive && !exercise.completed ? (
-                          activeExerciseId === exercise.id ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => stopExercise(exercise.id)}
-                              className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                            >
-                              <StopCircle size={16} className="mr-1" />
-                              Stop
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => startExercise(exercise.id)}
-                              className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                            >
-                              <PlayCircle size={16} className="mr-1" />
-                              Start
-                            </Button>
-                          )
+                          currentExerciseIndex === index ? (
+                            activeExerciseId === exercise.id ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => stopExercise(exercise.id)}
+                                className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                              >
+                                <StopCircle size={16} className="mr-1" />
+                                Complete
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => startExercise(exercise.id)}
+                                className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                              >
+                                <PlayCircle size={16} className="mr-1" />
+                                Start
+                              </Button>
+                            )
+                          ) : null
                         ) : null}
                       </div>
                       

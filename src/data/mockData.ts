@@ -526,17 +526,52 @@ export const addMealEntry = (entry: Omit<MealEntry, 'id' | 'food'>) => {
   });
 };
 
-export const addWorkoutEntry = (entry: Omit<WorkoutEntry, 'id' | 'workout'>) => {
+export const addWorkoutEntry = (entry: Omit<WorkoutEntry, 'id' | 'workout'> & { customWorkout?: Workout }) => {
+  // Handle custom workout case
+  let workout: Workout;
+  
+  if (entry.workoutId.startsWith('custom-') && entry.customWorkout) {
+    // For custom workouts, we save the workout itself to the workouts array if it doesn't exist
+    const existingWorkout = workouts.find(w => w.id === entry.workoutId);
+    
+    if (!existingWorkout) {
+      workouts.push(entry.customWorkout);
+    }
+    
+    workout = existingWorkout || entry.customWorkout;
+  } else {
+    // For regular workouts, we find it from the existing array
+    workout = workouts.find(w => w.id === entry.workoutId)!;
+    
+    if (!workout) {
+      throw new Error(`Workout with ID ${entry.workoutId} not found`);
+    }
+  }
+  
   const newEntry: WorkoutEntry = {
     ...entry,
     id: (workoutEntries.length + 1).toString(),
-    workout: workouts.find(w => w.id === entry.workoutId)!
+    workout
   };
   
   workoutEntries.push(newEntry);
   
   return new Promise<WorkoutEntry>((resolve) => {
     setTimeout(() => resolve(newEntry), 500);
+  });
+};
+
+export const addCustomFood = (food: Food) => {
+  // Make sure ID is present and unique
+  const newFood = {
+    ...food,
+    id: food.id || `custom-${Date.now()}`
+  };
+  
+  foods.push(newFood);
+  
+  return new Promise<Food>((resolve) => {
+    setTimeout(() => resolve(newFood), 500);
   });
 };
 

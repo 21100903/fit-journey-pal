@@ -2,8 +2,9 @@
 import React from 'react';
 import MobileLayout from '@/components/Layout/MobileLayout';
 import FoodList from '@/components/Nutrition/FoodList';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ClockIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const NutritionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,14 +15,16 @@ const NutritionPage: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">Nutrition</h1>
-            <p className="text-sm text-white/80">Find and log your meals</p>
+            <p className="text-sm text-white/80">Track your food and calories</p>
           </div>
-          <button 
-            onClick={() => navigate('/meals')}
+          <Button 
+            onClick={() => navigate('/custom-food')}
             className="bg-white/20 text-white rounded-full p-2 hover:bg-white/30"
+            size="icon"
+            variant="ghost"
           >
-            <ClockIcon size={20} />
-          </button>
+            <Plus size={20} />
+          </Button>
         </div>
       </div>
       <FoodList />

@@ -19,6 +19,7 @@ import MealHistoryPage from "./pages/MealHistoryPage";
 import AddEntryPage from "./pages/AddEntryPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
+import CustomFoodPage from "./pages/CustomFoodPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/custom-workout" element={<CustomWorkoutPage />} />
             <Route path="/nutrition" element={<NutritionPage />} />
             <Route path="/nutrition/:foodId" element={<FoodDetailPage />} />
+            <Route path="/custom-food" element={<CustomFoodPage />} />
             <Route path="/meals" element={<MealHistoryPage />} />
             <Route path="/add" element={<AddEntryPage />} />
             <Route path="/profile" element={<ProfilePage />} />
