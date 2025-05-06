@@ -1,20 +1,34 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Utensils, TrendingUp } from 'lucide-react';
+import { Activity, Utensils, TrendingUp, Dumbbell, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getUserMealEntries, 
   getUserWorkoutEntries, 
   MealEntry, 
-  WorkoutEntry
+  WorkoutEntry,
+  deleteWorkoutEntry
 } from '@/data/mockData';
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DashboardSummary: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
+  const [workoutToDelete, setWorkoutToDelete] = React.useState<WorkoutEntry | null>(null);
 
   const { data: mealEntries = [] } = useQuery({
     queryKey: ['mealEntries', user?.id, today],
@@ -26,6 +40,25 @@ const DashboardSummary: React.FC = () => {
     queryKey: ['workoutEntries', user?.id, today],
     queryFn: () => getUserWorkoutEntries(user?.id || ''),
     enabled: !!user?.id,
+  });
+
+  const deleteWorkoutMutation = useMutation({
+    mutationFn: deleteWorkoutEntry,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workoutEntries', user?.id] });
+      toast({
+        title: "Workout deleted",
+        description: "Your workout entry has been removed.",
+      });
+      setWorkoutToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the workout entry. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   // Calculate nutrition totals for today
@@ -125,14 +158,27 @@ const DashboardSummary: React.FC = () => {
         {workoutEntries.length > 0 ? (
           <div>
             {workoutEntries.map((entry) => (
-              <div key={entry.id} className="flex items-center py-2 border-b last:border-0">
-                <div className="bg-fitness-primary/10 p-2 rounded-lg mr-3">
-                  <Dumbbell className="text-fitness-primary" size={16} />
+              <div key={entry.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <div className="flex items-center">
+                  <div className="bg-fitness-primary/10 p-2 rounded-lg mr-3">
+                    <Dumbbell className="text-fitness-primary" size={16} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{entry.workout.name}</p>
+                    <p className="text-xs text-gray-600">{entry.duration} min • {entry.intensity} intensity</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-sm">{entry.workout.name}</p>
-                  <p className="text-xs text-gray-600">{entry.duration} min • {entry.intensity} intensity</p>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteWorkout(entry);
+                  }}
+                  className="h-8 w-8 p-0"
+                >
+                  <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-500" />
+                </Button>
               </div>
             ))}
           </div>
@@ -146,10 +192,25 @@ const DashboardSummary: React.FC = () => {
           Log New Activity
         </button>
       </div>
+
+      <AlertDialog open={!!workoutToDelete} onOpenChange={(open) => !open && setWorkoutToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workout Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this workout? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteWorkout} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 export default DashboardSummary;
-
-import { Dumbbell } from 'lucide-react';

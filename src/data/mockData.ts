@@ -539,3 +539,15 @@ export const addWorkoutEntry = (entry: Omit<WorkoutEntry, 'id' | 'workout'>) => 
     setTimeout(() => resolve(newEntry), 500);
   });
 };
+
+export const deleteWorkoutEntry = (workoutId: string) => {
+  const index = workoutEntries.findIndex(entry => entry.id === workoutId);
+  
+  if (index !== -1) {
+    workoutEntries.splice(index, 1);
+  }
+  
+  return new Promise<void>((resolve) => {
+    setTimeout(() => resolve(), 500);
+  });
+};
