@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -31,6 +30,7 @@ interface Exercise {
   completed: boolean;
   timeSpent?: number;
   notes?: string;
+  description: string; // Added this required field to match mockData.ts Exercise interface
 }
 
 interface CustomWorkoutForm {
@@ -95,7 +95,8 @@ const CustomWorkout: React.FC = () => {
         name: '',
         sets: 3,
         reps: 10,
-        completed: false
+        completed: false,
+        description: '' // Add default description value for new exercises
       }
     ]);
   };
@@ -208,7 +209,10 @@ const CustomWorkout: React.FC = () => {
           id: 'custom-' + Date.now(),
           name: form.getValues('name'),
           description: form.getValues('description') || 'Custom workout',
-          exercises: exercises,
+          exercises: exercises.map(exercise => ({
+            ...exercise,
+            description: exercise.description || `${exercise.name} - ${exercise.sets} sets of ${exercise.reps} reps` // Ensure every exercise has a description
+          })),
           duration: workoutTimeSpent || 0,
           caloriesBurn: (workoutTimeSpent || 0) * 5, // Rough estimate: 5 calories per minute
           // Add the missing required Workout properties with correct types
