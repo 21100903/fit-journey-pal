@@ -5,9 +5,9 @@ import MobileLayout from '@/components/Layout/MobileLayout';
 
 const CustomWorkoutPage: React.FC = () => {
   return (
-    <MobileLayout>
+    //<MobileLayout>
       <CustomWorkout />
-    </MobileLayout>
+    //</MobileLayout>
   );
 };
 
