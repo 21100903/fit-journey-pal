@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
@@ -72,6 +71,12 @@ const CustomWorkout: React.FC = () => {
         description: ''
       }
     ]);
+    
+    // Add toast notification when exercise is added
+    toast.success("New exercise added!", {
+      description: `Exercise #${currentExercises.length + 1} has been added to your workout.`,
+      duration: 3000
+    });
   };
 
   const removeExercise = (id: string) => {
